@@ -1,4 +1,3 @@
-
 /* =========== CONNECTING ESP8266 ===========
 driver for connecting on windows: https://www.silabs.com/documents/public/software/CP210x_Windows_Drivers.zip
 IDE: file menu > preference > Additional Board Manager: http://arduino.esp8266.com/stable/package_esp8266com_index.json
@@ -10,18 +9,14 @@ gebaseerd op de IRsendDemo van de IRremoteesp8266 library
 schema komt van: https://github.com/crankyoldgit/IRremoteESP8266/wiki#ir-receiving
 */
 
-
 #include <U8g2lib.h> // WifiKit8 display
-
 #include <IRremoteESP8266.h> // IR on ESP8266
 #include <IRsend.h> // sending IR signals
-
-
 
 #define trigger D7
 #define laser D8
 
-const uint16_t kIrLed = D2;
+const uint16_t kIrLed = D6;
 IRsend irsend(kIrLed);
 
 // U8g2 Contructor for WiFi Kit 8
@@ -37,19 +32,19 @@ int bullets = MAX_BULLETS;
 
 // trigger and reload variables
 int triggerState;
-
 int lastTriggerState = LOW;
-
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50; 
-
 const int reloadTime = 2000;
 
 // laser variable
 int laserState = LOW;
+unsigned long LaserTimer = 0;
+const unsigned long shootDuration = 500;
 
 void setup() {
   u8g2.begin();
+  u8g2.setDisplayRotation(U8G2_R2); // Rotate display 180°
   irsend.begin();
 
   pinMode(trigger, INPUT_PULLUP);
@@ -61,51 +56,48 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currentRefreshMillis = millis();
-
+  unsigned long currentMillis = millis();
   int reading = digitalRead(trigger);
 
   if (reading != lastTriggerState) {
-    // reser de timer
+    // reset de timer
     lastDebounceTime = millis();
   }
 
-  if ((millis() - lastDebounceTime) > debounceDelay) {
-
+  if ((currentMillis - lastDebounceTime) > debounceDelay) {
     if (reading != triggerState) {
       triggerState = reading;
 
       // if trigger is low, shoot (Normal Closed trigger)
       if (triggerState == LOW) {
-        laserState = !laserState;
-        if (laserState == HIGH) {
-          if (bullets <= 0) {
-            reload();
-          } else {
-            bullets--;
+        laserState = HIGH;
+        LaserTimer = currentMillis;
 
-            // Send shoot signal with IR
-            uint32_t irCode = 0x00FFA25D;
-            irsend.sendNEC(irCode, 32);
-          }
-          updateScreen();
+        if (bullets <= 0) {
+          reload();
+        } else {
+          bullets--;
+
+          // Send signal with IR
+          uint32_t irCode = 0x00DECAFE; // hehe :)
+          irsend.sendNEC(irCode, 32);
         }
+        updateScreen();
       }
     }
+  }
+
+  // stop laser after shootDuration
+  if (laserState == HIGH && (currentMillis - LaserTimer >= shootDuration)) {
+    laserState = LOW;
   }
 
   // update laserState and reading
   digitalWrite(laser, laserState);
   lastTriggerState = reading;
-
-  // stop laser if trigger is not pressed
-  if (triggerState == HIGH && millis() - lastDebounceTime > debounceDelay) {
-    laserState = LOW;
-    digitalWrite(laser, laserState);
-  }
 }
 
-// function for updateing the display
+// function for updating the display
 void updateScreen() {
   u8g2.setFont(u8g2_font_logisoso32_tf);
   u8g2.firstPage();
