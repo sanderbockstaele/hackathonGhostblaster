@@ -1,4 +1,6 @@
 #include <TM1637Display.h>
+#include "ghost.hpp"
+
 #define CLK 9
 #define DIO 8
 #define timer 1000
@@ -52,12 +54,32 @@ void setup() {
   data[1] = display.encodeDigit(0);
   data[0] = display.encodeDigit(0);
   display.setSegments(data);
-  wachten();
-  
+  // wachten();
+
+  ghostUp(1);
+  delay(10000);
+  ghostDown(1);
 }
 
 void loop() {
-  
+  for (int i = A0; i < A5; i++){
+    hit(i);
+  }
+
+  unsigned long ghostCurrentMillis = millis();
+
+  if (ghostCurrentMillis - ghostPreviousMillis >= choiceInterval) {
+    ghostPreviousMillis = ghostCurrentMillis;
+
+    int ghostId = random(0,6);
+
+    if(ghostStatus[ghostId] == false){
+      ghostUp(ghostId);
+    }
+    else{
+      ghostDown(ghostId);
+    }
+  }
   
   testknopstatus = digitalRead(testKnop);
   StartknopStatus = digitalRead(startKnop);
@@ -70,7 +92,7 @@ void loop() {
     data[1] = display.encodeDigit(0);
     data[0] = display.encodeDigit(0);
     display.setSegments(data);
-    wachten();
+    // wachten();
     x = 0;
     StartknopStatus = digitalRead(startKnop);
   }else if((StartknopStatus == HIGH) or (x == 1)){
@@ -101,10 +123,6 @@ void loop() {
     totalescore = 0;
   }
   }
-
-
-  
-    
 }
 void klokstart(){
   y = 5;
