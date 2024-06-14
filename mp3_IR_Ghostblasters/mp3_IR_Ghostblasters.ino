@@ -3,6 +3,9 @@ code for DFrobot based of https://wiki.dfrobot.com/DFPlayer_Mini_SKU_DFR0299#tar
 Connect rx of mp3 player to Serial2 tx (16) of Arduino mega with 1k ohm resistor
 Connect tx of mp3 player to Serial2 rx (17) of Arduino mega
 Order of mp3 files is the order in which they were added
+
+=========== Set up IR_resv ===========
+Use IRremote v2.6.0
 */
 
 
