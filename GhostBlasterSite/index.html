@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostBlaster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="main.js" defer></script>
+    
+    <link rel="stylesheet" href="prism.css">
+    <script src="prism.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="./"><h1>GhostBlaster</h1></a>
+        </nav>
+    </header>
+    <main class="container">
+        <section class="intro">
+            <img src="img/introimage1.jpg" alt="Afbeelding met GhostBlaster">
+            <p>Ons spel heet GhostBlaster, hierbij is het de bedoeling dat er aan de hand van een geweer, uitgerust met een laser, op verschillende doelwitten schiet. Hieronder wordt verder uitgelegd hoe we dit nu precies hebben uitgewerkt.</p>
+        </section>
+        <section class="mainParts">
+            <h2>Hoofd onderdelen</h2>
+            <div class="cards">
+                <div>
+                    <h3>Laser</h3>
+                    <img src="img/laser1.png" alt="Afbeelding Laser onderdeel">
+                    <p>De laser is een van de belangrijkste onderdelen van het spel. Hiermee kun je de doelwitten raken en punten scoren.</p>
+                </div>
+                <div>
+                    <h3>LDR sensor</h3>
+                    <img src="img/ldr1.png" alt="Afbeelding LDR sensor">
+                    <p>De LDR sensor word gebruikt om het signaal van de laser te ontvangen.</p>
+                </div>
+                <div>
+                    <h3>Servo Motor</h3>
+                    <img src="img/servo1.png" alt="Afbeelding servo motor">
+                    <p>Aan de servo motoren zijn de doelwitten bevestigd, waarop dan weer de LDR sensoren zijn bevestigd. Hierdoor zit er beweging in het spel.</p>
+                </div>
+                <div>
+                    <h3>Trigger</h3>
+                    <img src="img/trigger1.png" alt="Afbeelding trigger onderdeel">
+                    <p>De trigger word gebruikt om de laser te laten branden en ervoor te zorgen dat er doelwitten geraakt kunnen worden.</p>
+                </div>
+                <div>
+                    <h3>Wifi Kit 8</h3>
+                    <img src="img/wifikit1.png" alt="Afbeelding Wifi kit">
+                    <p>De wifi kit is het hart van ons laser geweer. Hier zijn alle onderdelen van het geweer op aangesloten en is er ook een display ingebouwd die het aantal resterend kogels toont.</p>
+                </div>
+                <div>
+                    <h3>Arduino MEGA</h3>
+                    <img src="img/arduinomega.png" alt="Afbeelding Arduino MEGA">
+                    <p>De Arduino MEGA zorgt voor de centrale sturing van ons spel. Hier worden alle LDR sensoren en servo's op aangesloten, maar ook de puntentelling wordt hiermee berekend en getoont op een 7 Segment Display</p>
+                </div>
+                <div>
+                    <h3>7-Segment Display</h3>
+                    <img src="img/7segdisp.png" alt="Afbeelding 7-segment display">
+                    <p>In onze opstelling zijn er meerdere 7-segment displays. Deze worden gebruikt voor de resterende tijd te tonen, maar ook om de punten weer te geven.</p>
+                </div>
+            </div>
+        </section>
+        <section class="flowChart">
+            <h2>Flow Chart</h2>
+            <p>Hieronder staat de flowchart die onze code duidelijker afbeeld</p>
+            <img src="img/flowchart.png" alt="Flowchart">
+        </section>
+        <section class="blokSchema">
+            <h2>Hardware blokschema</h2>
+            <p>Hieronder staat het blokschema van alle hardware componenten</p>
+            <img src="img/blokschema.png" alt="Blokschema">
+        </section>
+        <section class="arduinoCode">
+            <h2>Code</h2>
+            <p>Hieronder kan u de verschillende delen code terug vinden van ons project in de verschillende menu's.</p>
+            <a href="">Link naar de GitHub Repository</a>   
+            <button class="accordion">Code Lasergun</button>
+            <div class="panel">
+              <pre>
+                <code class="language-js">
+/* =========== CONNECTING ESP8266 ===========
+driver for connecting on windows: https://www.silabs.com/documents/public/software/CP210x_Windows_Drivers.zip
+IDE: file menu > preference > Additional Board Manager: http://arduino.esp8266.com/stable/package_esp8266com_index.json
+IDE: board manager > download ESP8266
+IDE: tools > board manager > ESP8266 > NodeMCU 1.0 (ESP-12E Module)
+
+=== connecting IR LED ===
+gebaseerd op de IRsendDemo van de IRremoteesp8266 library
+schema komt van: https://github.com/crankyoldgit/IRremoteESP8266/wiki#ir-receiving
+*/
+
+#include <U8g2lib.h> // WifiKit8 display
+#include <IRremoteESP8266.h> // IR on ESP8266
+#include <IRsend.h> // sending IR signals
+
+#define trigger D7
+#define laser D8
+
+const uint16_t kIrLed = D6;
+IRsend irsend(kIrLed);
+
+// U8g2 Contructor for WiFi Kit 8
+U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ 16, /* clock=*/ 5, /* data=*/ 4);
+
+// refresh screen
+unsigned long previousRefreshMillis = 0;
+const long screenRefreshInterval = 1000;
+
+// bullets in gun
+const int MAX_BULLETS = 10;
+int bullets = MAX_BULLETS;
+
+// trigger and reload variables
+int triggerState;
+int lastTriggerState = LOW;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50; 
+const int reloadTime = 2000;
+
+// laser variable
+int laserState = LOW;
+unsigned long LaserTimer = 0;
+const unsigned long shootDuration = 500;
+
+void setup() {
+u8g2.begin();
+u8g2.setDisplayRotation(U8G2_R2); // Rotate display 180°
+irsend.begin();
+
+pinMode(trigger, INPUT_PULLUP);
+pinMode(laser, OUTPUT);
+
+digitalWrite(laser, laserState); // make sure laser is off
+
+updateScreen(); // start display
+}
+
+void loop() {
+unsigned long currentMillis = millis();
+int reading = digitalRead(trigger);
+
+if (reading != lastTriggerState) {
+// reset de timer
+lastDebounceTime = millis();
+}
+
+if ((currentMillis - lastDebounceTime) > debounceDelay) {
+if (reading != triggerState) {
+    triggerState = reading;
+
+    // if trigger is low, shoot (Normal Closed trigger)
+    if (triggerState == LOW) {
+    laserState = HIGH;
+    LaserTimer = currentMillis;
+
+    if (bullets <= 0) {
+        reload();
+    } else {
+        bullets--;
+
+        // Send signal with IR
+        uint32_t irCode = 0x00DECAFE; // hehe :)
+        irsend.sendNEC(irCode, 32);
+    }
+    updateScreen();
+    }
+}
+}
+
+// stop laser after shootDuration
+if (laserState == HIGH && (currentMillis - LaserTimer >= shootDuration)) {
+laserState = LOW;
+}
+
+// update laserState and reading
+digitalWrite(laser, laserState);
+lastTriggerState = reading;
+}
+
+// function for updating the display
+void updateScreen() {
+u8g2.setFont(u8g2_font_logisoso32_tf);
+u8g2.firstPage();
+do {
+u8g2.drawUTF8(0, 32, (String(bullets) + "/" + String(MAX_BULLETS)).c_str());
+} while ( u8g2.nextPage() );
+}
+
+// Display reloading and set bullets to max
+void reload() {
+u8g2.setFont(u8g2_font_logisoso22_tf);
+u8g2.firstPage();
+do {
+u8g2.drawUTF8(0, 32, "RELOADING...");
+} while ( u8g2.nextPage() );
+
+delay(reloadTime);
+bullets = MAX_BULLETS;
+}
+                </code>
+              </pre>
+            </div>
+            
+            <button class="accordion">Code MP3 & IR</button>
+            <div class="panel">
+              <pre>
+                <code class="language-js">
+/*  =========== CONNECTING DFrobot mp3 mini ===========
+code for DFrobot based of https://wiki.dfrobot.com/DFPlayer_Mini_SKU_DFR0299#target_6
+Connect rx of mp3 player to Serial2 tx (16) of Arduino mega with 1k ohm resistor
+Connect tx of mp3 player to Serial2 rx (17) of Arduino mega
+Order of mp3 files is the order in which they were added
+
+=========== Set up IR_resv ===========
+Use IRremote v2.6.0
+*/
+
+
+#include "IRremote.h"
+#include "Arduino.h"
+#include "DFRobotDFPlayerMini.h"
+
+// IR variables
+int receiver = 11;
+IRrecv irrecv(receiver);
+decode_results results;
+
+// Create instance of mp3 player
+DFRobotDFPlayerMini DFPlayer;
+
+void setup() {
+    Serial.begin(9600);
+    Serial.println("IR Receiver Button Decode");
+    irrecv.enableIRIn(); // Start IRRecv
+
+    // Use Serial2, Serial1 didn't work on Arduino Mega
+    Serial2.begin(9600);
+
+    // Try connection
+    if (!DFPlayer.begin(Serial2)) {
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    while (true);
+    }
+    Serial.println(F("DFPlayer Mini online."));
+
+    DFPlayer.volume(30); // Volume (0-30)
+    DFPlayer.play(2); // play second mp3, to test (coin)
+}
+
+void loop() {
+    if (irrecv.decode(&results)) { // recieved signal?
+    Serial.println(results.value, HEX);
+    if (results.value == 0xDECAFE) { // IR signal of gun is DECAFE
+        DFPlayer.play(1); // Play first mp3 (shot)
+    }
+    delay(500);
+    irrecv.resume(); // Wait for next
+    }
+}
+                </code>
+              </pre>
+            </div>
+            
+            <button class="accordion">Section 3</button>
+            <div class="panel">
+              <p>Lorem ipsum...</p>
+            </div> 
+            <pre>
+                <code>
+                    
+                </code>
+            </pre>
+        </section>
+    </main>
+    <footer>
+        <ul>
+            <li><h2>Made By</h2></li>
+            <li>Sander Bockstaele</li>
+            <li>Maxim Claus</li>
+            <li>Thian D'haene</li>
+            <li>Wouter Elegheer</li>
+            </ul>
+        <p>&copy; 2024 GhostBlaster</p>
+    </footer>
+</body>
+</html>
