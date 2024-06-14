@@ -6,6 +6,7 @@
     --text-color: #333;
     --header-footer-bg: #34495e;
     --card-bg: #fff;
+    --link-hover: #2980b9;
     --card-shadow: rgba(0, 0, 0, 0.1);
     --font-family: 'Josefin Sans', sans-serif;
 }
@@ -201,4 +202,34 @@ footer ul li {
     font-size: 1rem;
     line-height: 1.6;
     color: var(--text-color);
+}
+
+.arduinoCode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 5rem;
+}
+
+.arduinoCode h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+.arduinoCode p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.arduinoCode a {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.arduinoCode a:hover {
+    color: var(--link-hover);
 }
