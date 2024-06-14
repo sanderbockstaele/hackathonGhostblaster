@@ -1,5 +1,16 @@
 #include <TM1637Display.h>
+#include "IRremote.h"
+#include "Arduino.h"
+#include "DFRobotDFPlayerMini.h"
 #include "ghost.hpp"
+
+// IR variables
+int receiver = A8;
+IRrecv irrecv(receiver);
+decode_results results;
+
+// Create instance of mp3 player
+DFRobotDFPlayerMini DFPlayer;
 
 #define CLK 9
 #define DIO 8
@@ -62,7 +73,16 @@ void setup() {
 }
 
 void loop() {
-  for (int i = A0; i < A5; i++){
+  if (irrecv.decode(&results)) { // recieved signal?
+    Serial.println(results.value, HEX);
+    if (results.value == 0xDECAFE) { // IR signal of gun is DECAFE
+      DFPlayer.play(1); // Play first mp3 (shot)
+    }
+    delay(500);
+    irrecv.resume(); // Wait for next
+  }
+
+  for (int i = A10; i < A15; i++){
     hit(i);
   }
 
@@ -94,6 +114,7 @@ void loop() {
     display.setSegments(data);
     // wachten();
     x = 0;
+    totalescore = 0;
     StartknopStatus = digitalRead(startKnop);
   }else if((StartknopStatus == HIGH) or (x == 1)){
     if(x == 0){
@@ -101,6 +122,7 @@ void loop() {
       digitalWrite(seg11, HIGH); digitalWrite(seg12, LOW); digitalWrite(seg13, LOW); digitalWrite(seg14, LOW); digitalWrite(seg15, LOW); digitalWrite(seg16, LOW); digitalWrite(seg17, LOW);
       klokstart();
       timertijd = 101;
+      totalescore = 0;
     }
     x = 1;
     testknopstatus = digitalRead(testKnop);

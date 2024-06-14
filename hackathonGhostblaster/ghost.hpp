@@ -23,7 +23,7 @@ bool ghostStatus[] = {false, false, false, false, false};
 int ghostShown = 0;
 
 void hit(uint8_t pin){
-  int ghostId = ghostPin[pin];
+  int ghostId = ghostPin[pin-64];
   if (analogRead(pin) > baseLightLevel){
       ghostDown(ghostId);
   }
