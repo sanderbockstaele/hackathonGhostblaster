@@ -109,7 +109,7 @@ header nav a {
     align-items: center;
 }
 
-.flowChart, .blokSchema {
+.flowChart, .blokSchema, .fritzing {
     text-align: center;
     margin-bottom: 40px;
 }
