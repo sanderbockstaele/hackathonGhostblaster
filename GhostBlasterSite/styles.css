@@ -109,12 +109,12 @@ header nav a {
     align-items: center;
 }
 
-.flowChart, .blokSchema, .fritzing {
+.flowChart, .blokSchema, .fritzing, .mainParts {
     text-align: center;
     margin-bottom: 40px;
 }
 
-.flowChart img, .blokSchema img {
+.flowChart img, .blokSchema img, .fritzing img{
     max-width: 100%;
     height: auto;
     border-radius: 10px;
@@ -195,6 +195,7 @@ footer ul li {
     box-shadow: 0 4px 8px var(--card-shadow);
     margin-top: 1px;
     margin-bottom: 5px;
+    width: 100%;
 }
 
 .panel-content {
