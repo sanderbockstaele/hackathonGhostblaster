@@ -42,8 +42,6 @@ int tiental = 0;
 int eenheid = 0;
 #define startKnop 53
 short StartknopStatus = 0;
-bool gameRunning = false;
-short y = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -79,45 +77,52 @@ void setup() {
 }
 
 void loop() {
+  // Prepare score display
   digitalWrite(seg21, HIGH); digitalWrite(seg22, HIGH); digitalWrite(seg23, HIGH); digitalWrite(seg24, HIGH); digitalWrite(seg25, HIGH); digitalWrite(seg26, HIGH); digitalWrite(seg27, HIGH);
   digitalWrite(seg11, HIGH); digitalWrite(seg12, HIGH); digitalWrite(seg13, HIGH); digitalWrite(seg14, HIGH); digitalWrite(seg15, HIGH); digitalWrite(seg16, HIGH); digitalWrite(seg17, HIGH);
+  // Prepare time display
   display.setBrightness(0x0f);
   data[3] = display.encodeDigit(0);
   data[2] = display.encodeDigit(0);
   data[1] = display.encodeDigit(0);
   data[0] = display.encodeDigit(0);
   display.setSegments(data);
-  wachten();
-  gameRunning = 0;
-  totalescore = 0;
+
+  wachten(); // Display a waiting pattern
+  totalescore = 0; // Zero the score
 
   StartknopStatus = digitalRead(startKnop);
+  // If the startbutton is pressed
   if(StartknopStatus == HIGH){
+    // Clear score display
     digitalWrite(seg21, HIGH); digitalWrite(seg22, LOW); digitalWrite(seg23, LOW); digitalWrite(seg24, LOW); digitalWrite(seg25, LOW); digitalWrite(seg26, LOW); digitalWrite(seg27, LOW);
     digitalWrite(seg11, HIGH); digitalWrite(seg12, LOW); digitalWrite(seg13, LOW); digitalWrite(seg14, LOW); digitalWrite(seg15, LOW); digitalWrite(seg16, LOW); digitalWrite(seg17, LOW);
-    klokstart();
-    timertijd = 101;
-    totalescore = 0;
+    
+    klokstart(); // Do countdown
 
+    timertijd = 101; // Set time 
+
+    // While the game is going on
     while (timertijd > 0) {
-      Serial
+      // CHeck for IR from gun
       if (irrecv.decode(&results)) { // recieved signal?
-
         DFPlayer.play(1); // Play first mp3 (shot)
         irrecv.resume(); // Wait for next
       }
-      
+
+      // Loop over all possible ldrs
       for (int i = A10; i < A15; i++){
         if (hit(i))
-          totalescore++;
+          totalescore++; // Increase score if hit
       }
 
+      // Every second change the state  from up to down or vice versa
       unsigned long ghostCurrentMillis = millis();
 
       if (ghostCurrentMillis - ghostPreviousMillis >= choiceInterval) {
         ghostPreviousMillis = ghostCurrentMillis;
 
-        int ghostId = random(0,2);
+        int ghostId = random(0,6);
 
         if(ghostStatus[ghostId] == false){
           ghostUp(ghostId);
@@ -127,25 +132,24 @@ void loop() {
         }
       }
 
-      gameRunning = true;
-      score();
-      klok();
-      if (totalescore > 99)
+      score(); // Display score
+      klok(); // Advance and display clock
+      if (totalescore > 99) // handle score overflow
         totalescore = 0;
     }
   }
 }
 
 void klokstart(){
-  y = 5;
-  while (y != 0){
+  int countDown = 5;
+  while (countDown != 0){
   display.setBrightness(0x0f);
-  data[3] = display.encodeDigit(y);
-  data[2] = display.encodeDigit(y);
-  data[1] = display.encodeDigit(y);
-  data[0] = display.encodeDigit(y);
+  data[3] = display.encodeDigit(countDown);
+  data[2] = display.encodeDigit(countDown);
+  data[1] = display.encodeDigit(countDown);
+  data[0] = display.encodeDigit(countDown);
   display.setSegments(data);
-  y--;
+  countDown--;
   delay(1000);
   }
 }

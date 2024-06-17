@@ -2,7 +2,7 @@
 #include "HardwareSerial.h"
 #include <Servo.h>
 
-#define baseLightLevel 180
+#define baseLightLevel 500
 #define up 100
 #define down 0
 
@@ -28,13 +28,14 @@ bool ghostStatus[] = {false, false, false, false, false}; //true = up, false = d
 int ghostShown = 0;
 
 bool hit(uint8_t pin){
-  int ghostId = ghostPin[pin-64];
-  Serial.println(analogRead(pin));
+  int ghostId = ghostPin[pin-65];
+  Serial.println(ghostId);
   if (analogRead(pin) > baseLightLevel){
     currentShotMilis = millis();
-    if (currentShotMilis - previousShotMilis > 100){
-      Serial.println("BIEM");
+    if (currentShotMilis - previousShotMilis > 500){
+      Serial.print(ghostId); Serial.println("BIEM");
       ghostDown(ghostId);
+      previousShotMilis = currentShotMilis;
       return true;
     }
   }
