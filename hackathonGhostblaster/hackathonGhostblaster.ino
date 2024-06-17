@@ -5,8 +5,8 @@
 #include "ghost.hpp"
 
 // IR variables
-int receiver = A8;
-IRrecv irrecv(receiver);
+int receiverPin = PB5;
+IRrecv irrecv(receiverPin);
 decode_results results;
 
 // Create instance of mp3 player
@@ -16,7 +16,6 @@ DFRobotDFPlayerMini DFPlayer;
 #define DIO 8
 #define timer 1000
 #define alarm 7
-#define buzztijd 500
 TM1637Display display(CLK, DIO);
 uint8_t data[] = {0, 0, 0, 0};
 unsigned long currentMillis = 0;
@@ -41,9 +40,9 @@ int tm = 0;
 int totalescore = 0;
 int tiental = 0;
 int eenheid = 0;
-#define startKnop 20
+#define startKnop 53
 short StartknopStatus = 0;
-short x = 0;
+bool gameRunning = false;
 short y = 0;
 
 void setup() {
@@ -63,96 +62,79 @@ void setup() {
   data[1] = display.encodeDigit(0);
   data[0] = display.encodeDigit(0);
   display.setSegments(data);
-  // wachten();
+  wachten();
 
-  ghostUp(1);
-  delay(10000);
-  ghostDown(1);
+  pinMode(PE3, INPUT);
+  irrecv.enableIRIn();
 }
 
 void loop() {
+  digitalWrite(seg21, HIGH); digitalWrite(seg22, HIGH); digitalWrite(seg23, HIGH); digitalWrite(seg24, HIGH); digitalWrite(seg25, HIGH); digitalWrite(seg26, HIGH); digitalWrite(seg27, HIGH);
+  digitalWrite(seg11, HIGH); digitalWrite(seg12, HIGH); digitalWrite(seg13, HIGH); digitalWrite(seg14, HIGH); digitalWrite(seg15, HIGH); digitalWrite(seg16, HIGH); digitalWrite(seg17, HIGH);
+  display.setBrightness(0x0f);
+  data[3] = display.encodeDigit(0);
+  data[2] = display.encodeDigit(0);
+  data[1] = display.encodeDigit(0);
+  data[0] = display.encodeDigit(0);
+  display.setSegments(data);
+  wachten();
+  gameRunning = 0;
+  totalescore = 0;
+  
+  ghostDown(0);
+  ghostDown(1);
+  ghostDown(2);
+  ghostDown(3);
+  ghostDown(4);
+  ghostDown(5);
+
   StartknopStatus = digitalRead(startKnop);
-  if((StartknopStatus == LOW) && (timertijd == 0)){
-    Serial.println(1);
-    digitalWrite(seg21, HIGH); digitalWrite(seg22, HIGH); digitalWrite(seg23, HIGH); digitalWrite(seg24, HIGH); digitalWrite(seg25, HIGH); digitalWrite(seg26, HIGH); digitalWrite(seg27, HIGH);
-    digitalWrite(seg11, HIGH); digitalWrite(seg12, HIGH); digitalWrite(seg13, HIGH); digitalWrite(seg14, HIGH); digitalWrite(seg15, HIGH); digitalWrite(seg16, HIGH); digitalWrite(seg17, HIGH);
-    display.setBrightness(0x0f);
-    data[3] = display.encodeDigit(0);
-    data[2] = display.encodeDigit(0);
-    data[1] = display.encodeDigit(0);
-    data[0] = display.encodeDigit(0);
-    display.setSegments(data);
-    wachten();
-    x = 0;
+  Serial.println(StartknopStatus);
+  if(StartknopStatus == HIGH){
+    digitalWrite(seg21, HIGH); digitalWrite(seg22, LOW); digitalWrite(seg23, LOW); digitalWrite(seg24, LOW); digitalWrite(seg25, LOW); digitalWrite(seg26, LOW); digitalWrite(seg27, LOW);
+    digitalWrite(seg11, HIGH); digitalWrite(seg12, LOW); digitalWrite(seg13, LOW); digitalWrite(seg14, LOW); digitalWrite(seg15, LOW); digitalWrite(seg16, LOW); digitalWrite(seg17, LOW);
+    klokstart();
+    timertijd = 101;
     totalescore = 0;
-    StartknopStatus = digitalRead(startKnop);
-    Serial.println("LOL");
-    Serial.println(StartknopStatus);
-  }else if((StartknopStatus == HIGH) or (x == 1)){
-    Serial.println(2);
-    if(x == 0){
-      digitalWrite(seg21, HIGH); digitalWrite(seg22, LOW); digitalWrite(seg23, LOW); digitalWrite(seg24, LOW); digitalWrite(seg25, LOW); digitalWrite(seg26, LOW); digitalWrite(seg27, LOW);
-      digitalWrite(seg11, HIGH); digitalWrite(seg12, LOW); digitalWrite(seg13, LOW); digitalWrite(seg14, LOW); digitalWrite(seg15, LOW); digitalWrite(seg16, LOW); digitalWrite(seg17, LOW);
-      klokstart();
-      timertijd = 101;
-      totalescore = 0;
 
-
-      ghostDown(0);
-      ghostDown(1);
-      ghostDown(2);
-      ghostDown(3);
-      ghostDown(4);
-      ghostDown(5);
-    }
-
-    if (irrecv.decode(&results)) { // recieved signal?
-      Serial.println(results.value, HEX);
+    while (timertijd > 0) {
+      if (irrecv.decode(&results)) { // recieved signal?
         if (results.value == 0xDECAFE) { // IR signal of gun is DECAFE
-          DFPlayer.play(1); // Play first mp3 (shot)
+          Serial.println("BANG!");
+          //DFPlayer.play(1); // Play first mp3 (shot)
         }
-      delay(500);
-      irrecv.resume(); // Wait for next
-    }
-
-    for (int i = A10; i < A15; i++){
-      if (hit(i))
-        totalescore++;
-    }
-
-    unsigned long ghostCurrentMillis = millis();
-
-    if (ghostCurrentMillis - ghostPreviousMillis >= choiceInterval) {
-      ghostPreviousMillis = ghostCurrentMillis;
-
-      int ghostId = random(0,6);
-
-      if(ghostStatus[ghostId] == false){
-        ghostUp(ghostId);
+        irrecv.resume(); // Wait for next
       }
-      else{
-        ghostDown(ghostId);
+      
+      for (int i = A10; i < A15; i++){
+        if (hit(i))
+          totalescore++;
       }
-    }
 
-    x = 1;
-    score();
-    klok();
-    if (timertijd == 0) {
-    while (tm < 3){ 
-      tone(alarm, 500);
-      delay(buzztijd);
-      noTone(alarm);
-      delay(buzztijd);
-      tm++;
+      unsigned long ghostCurrentMillis = millis();
+
+      if (ghostCurrentMillis - ghostPreviousMillis >= choiceInterval) {
+        ghostPreviousMillis = ghostCurrentMillis;
+
+        int ghostId = random(0,2);
+
+        if(ghostStatus[ghostId] == false){
+          ghostUp(ghostId);
+        }
+        else{
+          ghostDown(ghostId);
+        }
+      }
+
+      gameRunning = true;
+      score();
+      klok();
+      if (totalescore > 99)
+        totalescore = 0;
     }
-    delay(10000);
-  }
-  if (totalescore > 100) {
-    totalescore = 0;
-  }
   }
 }
+
 void klokstart(){
   y = 5;
   while (y != 0){
@@ -186,11 +168,11 @@ void klok () {
 
 void score(){
   
-  Serial.print(totalescore);
-  Serial.print("       ");
-  Serial.print(tiental);
-  Serial.print(" ");
-  Serial.println(eenheid);
+  // Serial.print(totalescore);
+  // Serial.print("       ");
+  // Serial.print(tiental);
+  // Serial.print(" ");
+  // Serial.println(eenheid);
   
   eenheid = totalescore % 10;
   tiental = totalescore / 10;
