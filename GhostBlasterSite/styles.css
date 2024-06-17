@@ -70,6 +70,22 @@ header nav a {
     font-size: 1.2rem;
 }
 
+.intro div{
+    display: flex;
+    flex-direction: wrap;
+    gap: 2rem;
+    justify-content: center;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.intro div img{
+    max-width: 30%;
+    height: auto;
+    border-radius: 10px;
+
+}
+
 .mainParts {
     margin-bottom: 40px;
 }
