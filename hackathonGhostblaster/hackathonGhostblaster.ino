@@ -5,7 +5,7 @@
 #include "ghost.hpp"
 
 // IR variables
-int receiverPin = PB5;
+int receiverPin = 11;
 IRrecv irrecv(receiverPin);
 decode_results results;
 
@@ -47,8 +47,6 @@ short y = 0;
 
 void setup() {
   Serial.begin(9600);
-  pinMode(alarm, OUTPUT);
-  noTone(alarm);
   pinMode(startKnop, INPUT);
 
   pinMode(seg11, OUTPUT); pinMode(seg12, OUTPUT); pinMode(seg13, OUTPUT); pinMode(seg14, OUTPUT); pinMode(seg15, OUTPUT); pinMode(seg16, OUTPUT); pinMode(seg17, OUTPUT);
@@ -64,8 +62,20 @@ void setup() {
   display.setSegments(data);
   wachten();
 
-  pinMode(PE3, INPUT);
   irrecv.enableIRIn();
+
+  Serial2.begin(9600);
+
+  if (!DFPlayer.begin(Serial2)) {
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    while (true);
+  }
+  Serial.println(F("DFPlayer Mini online."));
+
+  DFPlayer.volume(30); // Volume (0-30)
+  DFPlayer.play(2); // play second mp3, to test (coin)
 }
 
 void loop() {
@@ -80,16 +90,8 @@ void loop() {
   wachten();
   gameRunning = 0;
   totalescore = 0;
-  
-  ghostDown(0);
-  ghostDown(1);
-  ghostDown(2);
-  ghostDown(3);
-  ghostDown(4);
-  ghostDown(5);
 
   StartknopStatus = digitalRead(startKnop);
-  Serial.println(StartknopStatus);
   if(StartknopStatus == HIGH){
     digitalWrite(seg21, HIGH); digitalWrite(seg22, LOW); digitalWrite(seg23, LOW); digitalWrite(seg24, LOW); digitalWrite(seg25, LOW); digitalWrite(seg26, LOW); digitalWrite(seg27, LOW);
     digitalWrite(seg11, HIGH); digitalWrite(seg12, LOW); digitalWrite(seg13, LOW); digitalWrite(seg14, LOW); digitalWrite(seg15, LOW); digitalWrite(seg16, LOW); digitalWrite(seg17, LOW);
@@ -98,11 +100,10 @@ void loop() {
     totalescore = 0;
 
     while (timertijd > 0) {
+      Serial
       if (irrecv.decode(&results)) { // recieved signal?
-        if (results.value == 0xDECAFE) { // IR signal of gun is DECAFE
-          Serial.println("BANG!");
-          //DFPlayer.play(1); // Play first mp3 (shot)
-        }
+
+        DFPlayer.play(1); // Play first mp3 (shot)
         irrecv.resume(); // Wait for next
       }
       
