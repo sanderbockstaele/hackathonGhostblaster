@@ -149,7 +149,7 @@ void loop() {
       if (totalescore > 99) // handle score overflow
         totalescore = 0;
     }
-    DFPlayer.play(1);
+    DFPlayer.play(2);
     delay(5000);
   }
   else {
