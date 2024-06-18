@@ -92,113 +92,113 @@
             <div class="panel">
                 <pre>
                   <code class="language-js">
-                    #include &lt;TM1637Display.h&gt;
-                        #include "IRremote.h"
-                        #include "Arduino.h"
-                        #include "DFRobotDFPlayerMini.h"
-                        #include "ghost.hpp"
+                    #include &lt;TM1637Display.h&gt
+                    #include "IRremote.h"
+                    #include "Arduino.h"
+                    #include "DFRobotDFPlayerMini.h"
+                    #include "ghost.hpp"
+                       
+                    // IR variables
+                    int receiverPin = 11;
+                    IRrecv irrecv(receiverPin);
+                    decode_results results;
+                       
+                    // Create instance of mp3 player
+                    DFRobotDFPlayerMini DFPlayer;
+                       
+                    #define CLK 9
+                    #define DIO 8
+                    #define timer 1000
+                    #define alarm 7
+                    TM1637Display display(CLK, DIO);
+                    uint8_t data[] = {0, 0, 0, 0};
+                    unsigned long currentMillis = 0;
+                    unsigned long previousMillis = 0;
+                    unsigned long timertijd = 0;
+                    int tm = 0;
+                       
+                    #define seg11 22
+                    #define seg12 23
+                    #define seg13 25
+                    #define seg14 24
+                    #define seg15 26
+                    #define seg16 27
+                    #define seg17 28
+                    #define seg21 30
+                    #define seg22 31
+                    #define seg23 32
+                    #define seg24 33
+                    #define seg25 34
+                    #define seg26 36
+                    #define seg27 35
+                    int totalescore = 0;
+                    int tiental = 0;
+                    int eenheid = 0;
+                    #define startKnop 53
+                    #define ledPin 52
+                    short StartknopStatus = 0;
                         
-                        // IR variables
-                        int receiverPin = 11;
-                        IRrecv irrecv(receiverPin);
-                        decode_results results;
+                    void setup() {
+                        Serial.begin(9600);
+                        pinMode(startKnop, INPUT_PULLUP);
+                        pinMode(ledPin, OUTPUT);
                         
-                        // Create instance of mp3 player
-                        DFRobotDFPlayerMini DFPlayer;
+                        pinMode(seg11, OUTPUT); pinMode(seg12, OUTPUT); pinMode(seg13, OUTPUT); pinMode(seg14, OUTPUT); pinMode(seg15, OUTPUT); pinMode(seg16, OUTPUT); pinMode(seg17, OUTPUT);
+                        pinMode(seg21, OUTPUT); pinMode(seg22, OUTPUT); pinMode(seg23, OUTPUT); pinMode(seg24, OUTPUT); pinMode(seg25, OUTPUT); pinMode(seg26, OUTPUT); pinMode(seg27, OUTPUT);
+                        digitalWrite(seg21, HIGH); digitalWrite(seg22, HIGH); digitalWrite(seg23, HIGH); digitalWrite(seg24, HIGH); digitalWrite(seg25, HIGH); digitalWrite(seg26, HIGH); digitalWrite(seg27, HIGH);
+                        digitalWrite(seg11, HIGH); digitalWrite(seg12, HIGH); digitalWrite(seg13, HIGH); digitalWrite(seg14, HIGH); digitalWrite(seg15, HIGH); digitalWrite(seg16, HIGH); digitalWrite(seg17, HIGH);
                         
-                        #define CLK 9
-                        #define DIO 8
-                        #define timer 1000
-                        #define alarm 7
-                        TM1637Display display(CLK, DIO);
-                        uint8_t data[] = {0, 0, 0, 0};
-                        unsigned long currentMillis = 0;
-                        unsigned long previousMillis = 0;
-                        unsigned long timertijd = 0;
-                        int tm = 0;
+                        display.setBrightness(0x0f);
+                        data[3] = display.encodeDigit(0);
+                        data[2] = display.encodeDigit(0);
+                        data[1] = display.encodeDigit(0);
+                        data[0] = display.encodeDigit(0);
+                        display.setSegments(data);
+                        wachten();
                         
-                        #define seg11 22
-                        #define seg12 23
-                        #define seg13 25
-                        #define seg14 24
-                        #define seg15 26
-                        #define seg16 27
-                        #define seg17 28
-                        #define seg21 30
-                        #define seg22 31
-                        #define seg23 32
-                        #define seg24 33
-                        #define seg25 34
-                        #define seg26 36
-                        #define seg27 35
-                        int totalescore = 0;
-                        int tiental = 0;
-                        int eenheid = 0;
-                        #define startKnop 53
-                        #define ledPin 52
-                        short StartknopStatus = 0;
+                        irrecv.enableIRIn();
                         
-                        void setup() {
-                          Serial.begin(9600);
-                          pinMode(startKnop, INPUT_PULLUP);
-                          pinMode(ledPin, OUTPUT);
+                        Serial2.begin(9600);
                         
-                          pinMode(seg11, OUTPUT); pinMode(seg12, OUTPUT); pinMode(seg13, OUTPUT); pinMode(seg14, OUTPUT); pinMode(seg15, OUTPUT); pinMode(seg16, OUTPUT); pinMode(seg17, OUTPUT);
-                          pinMode(seg21, OUTPUT); pinMode(seg22, OUTPUT); pinMode(seg23, OUTPUT); pinMode(seg24, OUTPUT); pinMode(seg25, OUTPUT); pinMode(seg26, OUTPUT); pinMode(seg27, OUTPUT);
-                          digitalWrite(seg21, HIGH); digitalWrite(seg22, HIGH); digitalWrite(seg23, HIGH); digitalWrite(seg24, HIGH); digitalWrite(seg25, HIGH); digitalWrite(seg26, HIGH); digitalWrite(seg27, HIGH);
-                          digitalWrite(seg11, HIGH); digitalWrite(seg12, HIGH); digitalWrite(seg13, HIGH); digitalWrite(seg14, HIGH); digitalWrite(seg15, HIGH); digitalWrite(seg16, HIGH); digitalWrite(seg17, HIGH);
-                        
-                          display.setBrightness(0x0f);
-                          data[3] = display.encodeDigit(0);
-                          data[2] = display.encodeDigit(0);
-                          data[1] = display.encodeDigit(0);
-                          data[0] = display.encodeDigit(0);
-                          display.setSegments(data);
-                          wachten();
-                        
-                          irrecv.enableIRIn();
-                        
-                          Serial2.begin(9600);
-                        
-                          if (!DFPlayer.begin(Serial2)) {
+                        if (!DFPlayer.begin(Serial2)) {
                             Serial.println(F("Unable to begin:"));
                             Serial.println(F("1.Please recheck the connection!"));
                             Serial.println(F("2.Please insert the SD card!"));
                             while (true);
-                          }
-                          Serial.println(F("DFPlayer Mini online."));
-                        
-                          DFPlayer.volume(30); // Volume (0-30)
-                          DFPlayer.play(2); // play second mp3, to test (coin)ghostUp(0); 
-                        
-                        
                         }
+                        Serial.println(F("DFPlayer Mini online."));
                         
-                        void loop() {
-                          // Prepare score display
-                          digitalWrite(seg21, HIGH); digitalWrite(seg22, HIGH); digitalWrite(seg23, HIGH); digitalWrite(seg24, HIGH); digitalWrite(seg25, HIGH); digitalWrite(seg26, HIGH); digitalWrite(seg27, HIGH);
-                          digitalWrite(seg11, HIGH); digitalWrite(seg12, HIGH); digitalWrite(seg13, HIGH); digitalWrite(seg14, HIGH); digitalWrite(seg15, HIGH); digitalWrite(seg16, HIGH); digitalWrite(seg17, HIGH);
-                          // Prepare time display
-                          display.setBrightness(0x0f);
-                          data[3] = display.encodeDigit(0);
-                          data[2] = display.encodeDigit(0);
-                          data[1] = display.encodeDigit(0);
-                          data[0] = display.encodeDigit(0);
-                          display.setSegments(data);
-                        
-                          wachten(); // Display a waiting pattern
-                          totalescore = 0; // Zero the score
+                        DFPlayer.volume(30); // Volume (0-30)
+                        DFPlayer.play(2); // play second mp3, to test (coin)ghostUp(0); 
                         
                         
-                          ghostDown(0);
-                          ghostDown(1);
-                          ghostUp(2);
-                          ghostDown(3);
-                          ghostDown(4);
+                    }
                         
-                          StartknopStatus = digitalRead(startKnop);
-                          // If the startbutton is pressed
-                          if(StartknopStatus == LOW){
+                    void loop() {
+                        // Prepare score display
+                        digitalWrite(seg21, HIGH); digitalWrite(seg22, HIGH); digitalWrite(seg23, HIGH); digitalWrite(seg24, HIGH); digitalWrite(seg25, HIGH); digitalWrite(seg26, HIGH); digitalWrite(seg27, HIGH);
+                        digitalWrite(seg11, HIGH); digitalWrite(seg12, HIGH); digitalWrite(seg13, HIGH); digitalWrite(seg14, HIGH); digitalWrite(seg15, HIGH); digitalWrite(seg16, HIGH); digitalWrite(seg17, HIGH);
+                        // Prepare time display
+                        display.setBrightness(0x0f);
+                        data[3] = display.encodeDigit(0);
+                        data[2] = display.encodeDigit(0);
+                        data[1] = display.encodeDigit(0);
+                        data[0] = display.encodeDigit(0);
+                        display.setSegments(data);
+                        
+                        wachten(); // Display a waiting pattern
+                        totalescore = 0; // Zero the score
+                        
+                        
+                        ghostDown(0);
+                        ghostDown(1);
+                        ghostUp(2);
+                        ghostDown(3);
+                        ghostDown(4);
+                        
+                        StartknopStatus = digitalRead(startKnop);
+                        // If the startbutton is pressed
+                        if(StartknopStatus == LOW){
                             digitalWrite(ledPin, HIGH);
                             // Clear score display
                             digitalWrite(seg21, HIGH); digitalWrite(seg22, LOW); digitalWrite(seg23, LOW); digitalWrite(seg24, LOW); digitalWrite(seg25, LOW); digitalWrite(seg26, LOW); digitalWrite(seg27, LOW);
@@ -434,58 +434,133 @@ void ghostUp(uint8_t ghostId){
   servo.attach(ghostPin[ghostId]);
   servo.write(ghostVisible[ghostId]);
   ghostStatus[ghostId] = true;
-#define baseLightLevel 300
-#define up 100
-#define down 0
+}
+                </code>
+              </pre>
+            </div>
+            
+            <button class="accordion">Gun Logic</button>
+            <div class="panel">
+              <pre>
+                <code class="language-js">
+/* =========== CONNECTING ESP8266 ===========
+driver for connecting on windows: https://www.silabs.com/documents/public/software/CP210x_Windows_Drivers.zip
+IDE: file menu > preference > Additional Board Manager: http://arduino.esp8266.com/stable/package_esp8266com_index.json
+IDE: board manager > download ESP8266
+IDE: tools > board manager > ESP8266 > NodeMCU 1.0 (ESP-12E Module)
 
-#define choiceInterval 1000
+=== connecting IR LED ===
+gebaseerd op de IRsendDemo van de IRremoteesp8266 library
+schema komt van: https://github.com/crankyoldgit/IRremoteESP8266/wiki#ir-receiving
+*/
 
-bool hit(uint8_t pin, DFRobotDFPlayerMini DFPlayer);
-void ghostDown(uint8_t ghostPin);
-void setGhostState(int ghost);
+#include &lt;U8g2lib.h&gt; // WifiKit8 display
+#include &lt;IRremoteESP8266.h&gt; // IR on ESP8266
+#include &lt;IRsend.h&gt; // sending IR signals
 
-Servo servo;
+#define trigger D7
+#define laser D8
 
-unsigned long ghostCurrentMillis = 0;
-unsigned long ghostPreviousMillis = 0;
+const uint16_t kIrLed = D6;
+IRsend irsend(kIrLed);
 
-unsigned long currentShotMilis = 0;
-unsigned long previousShotMilis = 0;
+// U8g2 Contructor for WiFi Kit 8
+U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ 16, /* clock=*/ 5, /* data=*/ 4);
 
-int ghostPin[] = {PB4, PB2, PB3, PB5, PB6, 10};
-int ghostVisible[] = {0, 100, 150, 0, 180, 100};
-int ghostInvisible[] = {100, 10, 50, 80, 100, 0};
-bool ghostStatus[] = {false, false, false, false, false, false}; //true = up, false = down
+// refresh screen
+unsigned long previousRefreshMillis = 0;
+const long screenRefreshInterval = 1000;
 
-int ghostShown = 0;
+// bullets in gun
+const int MAX_BULLETS = 10;
+int bullets = MAX_BULLETS;
 
-bool hit(uint8_t pin, DFRobotDFPlayerMini DFPlayer){
-  int ghostId = ghostPin[pin-65];
-  if (analogRead(pin) > baseLightLevel){
-    currentShotMilis = millis();
-    if (currentShotMilis - previousShotMilis > 500){
-      Serial.print(ghostId); Serial.println("BIEM");
-      DFPlayer.play(2); // Play second mp3 (hit)
-      ghostDown(ghostId);
-      previousShotMilis = currentShotMilis;
-      return true;
+// trigger and reload variables
+int triggerState;
+int lastTriggerState = LOW;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50; 
+const int reloadTime = 2000;
+
+// laser variable
+int laserState = LOW;
+unsigned long LaserTimer = 0;
+const unsigned long shootDuration = 500;
+
+void setup() {
+    u8g2.begin();
+    u8g2.setDisplayRotation(U8G2_R2); // Rotate display 180°
+    irsend.begin();
+
+    pinMode(trigger, INPUT_PULLUP);
+    pinMode(laser, OUTPUT);
+
+    digitalWrite(laser, laserState); // make sure laser is off
+
+    updateScreen(); // start display
+}
+
+void loop() {
+    unsigned long currentMillis = millis();
+    int reading = digitalRead(trigger);
+
+    if (reading != lastTriggerState) {
+    // reset de timer
+    lastDebounceTime = millis();
     }
-  }
-  return false;
+
+    if ((currentMillis - lastDebounceTime) > debounceDelay) {
+    if (reading != triggerState) {
+        triggerState = reading;
+
+        // if trigger is low, shoot (Normal Closed trigger)
+        if (triggerState == LOW) {
+        laserState = HIGH;
+        LaserTimer = currentMillis;
+
+        if (bullets <= 0) {
+            reload();
+        } else {
+            bullets--;
+
+            // Send signal with IR
+            uint32_t irCode = 0x00DECAFE; // hehe
+            irsend.sendNEC(irCode, 32);
+        }
+        updateScreen();
+        }
+    }
+    }
+
+    // stop laser after shootDuration
+    if (laserState == HIGH && (currentMillis - LaserTimer >= shootDuration)) {
+    laserState = LOW;
+    }
+
+    // update laserState and reading
+    digitalWrite(laser, laserState);
+    lastTriggerState = reading;
 }
 
-void ghostDown(uint8_t ghostId){
-  Serial.println("ENTER DOWN");
-
-  servo.attach(ghostPin[ghostId]);
-  servo.write(ghostInvisible[ghostId]);
-  ghostStatus[ghostId] = false;
+// function for updating the display
+void updateScreen() {
+    u8g2.setFont(u8g2_font_logisoso32_tf);
+    u8g2.firstPage();
+    do {
+    u8g2.drawUTF8(0, 32, (String(bullets) + "/" + String(MAX_BULLETS)).c_str());
+    } while ( u8g2.nextPage() );
 }
 
-void ghostUp(uint8_t ghostId){
-  servo.attach(ghostPin[ghostId]);
-  servo.write(ghostVisible[ghostId]);
-  ghostStatus[ghostId] = true;
+// Display reloading and set bullets to max
+void reload() {
+    u8g2.setFont(u8g2_font_logisoso22_tf);
+    u8g2.firstPage();
+    do {
+    u8g2.drawUTF8(0, 32, "RELOADING...");
+    } while ( u8g2.nextPage() );
+
+    delay(reloadTime);
+    bullets = MAX_BULLETS;
 }                    
                 </code>
               </pre>
