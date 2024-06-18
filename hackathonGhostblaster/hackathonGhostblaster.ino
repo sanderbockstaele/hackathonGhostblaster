@@ -25,8 +25,8 @@ int tm = 0;
 
 #define seg11 22
 #define seg12 23
-#define seg13 24
-#define seg14 25
+#define seg13 25
+#define seg14 24
 #define seg15 26
 #define seg16 27
 #define seg17 28
@@ -35,17 +35,19 @@ int tm = 0;
 #define seg23 32
 #define seg24 33
 #define seg25 34
-#define seg26 35
-#define seg27 36
+#define seg26 36
+#define seg27 35
 int totalescore = 0;
 int tiental = 0;
 int eenheid = 0;
 #define startKnop 53
+#define ledPin 52
 short StartknopStatus = 0;
 
 void setup() {
   Serial.begin(9600);
-  pinMode(startKnop, INPUT);
+  pinMode(startKnop, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
 
   pinMode(seg11, OUTPUT); pinMode(seg12, OUTPUT); pinMode(seg13, OUTPUT); pinMode(seg14, OUTPUT); pinMode(seg15, OUTPUT); pinMode(seg16, OUTPUT); pinMode(seg17, OUTPUT);
   pinMode(seg21, OUTPUT); pinMode(seg22, OUTPUT); pinMode(seg23, OUTPUT); pinMode(seg24, OUTPUT); pinMode(seg25, OUTPUT); pinMode(seg26, OUTPUT); pinMode(seg27, OUTPUT);
@@ -73,7 +75,9 @@ void setup() {
   Serial.println(F("DFPlayer Mini online."));
 
   DFPlayer.volume(30); // Volume (0-30)
-  DFPlayer.play(2); // play second mp3, to test (coin)
+  DFPlayer.play(2); // play second mp3, to test (coin)ghostUp(0); 
+
+
 }
 
 void loop() {
@@ -91,9 +95,17 @@ void loop() {
   wachten(); // Display a waiting pattern
   totalescore = 0; // Zero the score
 
+
+  ghostDown(0);
+  ghostDown(1);
+  ghostUp(2);
+  ghostDown(3);
+  ghostDown(4);
+
   StartknopStatus = digitalRead(startKnop);
   // If the startbutton is pressed
-  if(StartknopStatus == HIGH){
+  if(StartknopStatus == LOW){
+    digitalWrite(ledPin, HIGH);
     // Clear score display
     digitalWrite(seg21, HIGH); digitalWrite(seg22, LOW); digitalWrite(seg23, LOW); digitalWrite(seg24, LOW); digitalWrite(seg25, LOW); digitalWrite(seg26, LOW); digitalWrite(seg27, LOW);
     digitalWrite(seg11, HIGH); digitalWrite(seg12, LOW); digitalWrite(seg13, LOW); digitalWrite(seg14, LOW); digitalWrite(seg15, LOW); digitalWrite(seg16, LOW); digitalWrite(seg17, LOW);
@@ -112,7 +124,7 @@ void loop() {
 
       // Loop over all possible ldrs
       for (int i = A10; i < A15; i++){
-        if (hit(i))
+        if (hit(i, DFPlayer))
           totalescore++; // Increase score if hit
       }
 
@@ -122,7 +134,7 @@ void loop() {
       if (ghostCurrentMillis - ghostPreviousMillis >= choiceInterval) {
         ghostPreviousMillis = ghostCurrentMillis;
 
-        int ghostId = random(0,6);
+        int ghostId = random(0,4);
 
         if(ghostStatus[ghostId] == false){
           ghostUp(ghostId);
@@ -137,6 +149,11 @@ void loop() {
       if (totalescore > 99) // handle score overflow
         totalescore = 0;
     }
+    DFPlayer.play(1);
+    delay(5000);
+  }
+  else {
+    digitalWrite(ledPin, LOW);
   }
 }
 
